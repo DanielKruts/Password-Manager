@@ -30,6 +30,5 @@ def verifyPW(storedHash: bytes, attemptedPW: str) -> bool:
         derivedKey = hashlib.scrypt(attemptedPW.encode('utf-8'), salt=s, n=N_COST, r=BLOCK_SIZE, p=P, dklen=klen)
         return derivedKey == key
     except ValueError:
-        print("Something went wrong.")
-        return False
-    
+        print("Error in values of the derived key, block size, key length, or the salt can all cause this.")
+        return False    
