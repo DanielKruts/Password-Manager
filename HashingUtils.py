@@ -1,5 +1,8 @@
-import hashlib # Used for all of the fun scrypt functions for hashing passwords, verifying passwords, etc.
 import os # Used for the cryptographically secure RNG, os.urandom
+import hashlib # Used for the creation of the cryptographically secure keys, then input into the HKDF for key derivation
+from cryptography.hazmat.primitives import hashes
+from cryptography.hazmat.primitives.kdf.hkdf import HKDF
+from typing import Optional, Tuple
 
 #-----------------------------------------------------------------------#
 # Parameters                                                            #
@@ -14,21 +17,38 @@ P = 1
 klen = 32
 
 # Takes a desired password and converts it into a byte formatting for hashlib.scrypt to properly handle
-# hashPW returns a byte formatted string of salt + the 
-def hashPW(password: str) -> bytes:
-    s = os.urandom(16) # 16 bytes of salt\
+# keyDerviation returns two keys, one for encryption of the passwords in the file, and the other for verification of the user
+def keyDerivation(password: str) -> Tuple[bytes, bytes]:
+    s = os.urandom(16) # 16 bytes of salt
     key = hashlib.scrypt(password.encode('utf-8'), salt=s, n=N_COST, r=BLOCK_SIZE, p=P, dklen=klen)
-    return s + key
+    
+    verify = HKDF(algorithm=hashes.SHA256(), length=klen, salt=s, info=bytes("Verification", 'utf-8'))
+    encrypt = HKDF(algorithm=hashes.SHA256(), length=klen, salt=s, info=bytes("Encryption", 'utf-8'))
+
+    verificationKey = verify.derive(key)
+    encryptionKey = encrypt.derive(key)
+
+    return (s+verificationKey, s+encryptionKey)
 
 # Derives the key portion from the attempted password and then compares it to the key stored inside of the database
-# Returns true if the password was the same and false if they are not the same, pretty straight forward
-def verifyPW(storedHash: bytes, attemptedPW: str) -> bool:
+# Returns the derivedKey if it's correct, else returns None, which indicates that password input was incorrect
+def verifyPW(storedHash: bytes, attemptedPW: str) -> Optional[bytes]:
     s = storedHash[:16]#First 16 bytes is the salt
-    key = storedHash[16:]#Last 16 bytes is the key
-
+    key = storedHash[16:]#Last 32 bytes is the verification key
     try:
         derivedKey = hashlib.scrypt(attemptedPW.encode('utf-8'), salt=s, n=N_COST, r=BLOCK_SIZE, p=P, dklen=klen)
-        return derivedKey == key
+
+        verification = HKDF(algorithm=hashes.SHA256(), length=klen, salt=s, info=bytes("Verification", 'utf-8'))
+
+        #For some reason, the verification function returns false when the keys are the same, or at least something that looks like false
+        # to the computer. So I've used not to get around this after confirming it will 100% raise an exception when the function finds
+        # the key being derived is different from the key, or .derive(derivedKey) is not the same as key(Original verification key stored)
+        if not (verification.verify(derivedKey, key)):
+            encrypt = HKDF(algorithm=hashes.SHA256(), length=klen, salt=s, info=bytes("Encryption", 'utf-8'))
+            derivedEncryption = encrypt.derive(derivedKey)
+            return s+derivedEncryption
+        return
+    
     except ValueError:
-        print("Error in values of the derived key, block size, key length, or the salt can all cause this.")
-        return False    
+        print("Error in the sizes of the parameters or the parameters themselves")
+        return
