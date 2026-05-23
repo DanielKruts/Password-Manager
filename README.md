@@ -12,12 +12,12 @@ A password manager that I'm building from scratch. I'm utilizing Python and the 
     - [ ] Start a document that shows the structure of the project to keep myself logically sound and accurate in my implementation
     - [ ] Build the small application with visuals that allows me to login with a username and password to access my section of the database
 
-
 ## 5/22/2026
     - Created a general basis for the project by starting to understand the hashlib library and playing around with some of the functions
     - Edited the README and started to create a general task list to keep myself on track in this README
 
 ## 5/23/2026
     - I found that hashlib does not support a context field which is important for creating the encryption and verification keys for the master password that is created for each account
+    - I have found the the HKDF function in the cryptography library of python will work well for deriving multiple keys in different context fields
     - I have successfully implemented the keyDerivation function correctly and confirmed that verifyPW will output the same exact encryption key after verifying that the derived verification key is also the same
-    - the biggest hurdle I believe is over, I now have to build the structure for the encryption schemes within the database and learn exactly how to use the sqlite library to interact with a database that I create
+    - The biggest hurdle I believe is over, I now have to build the structure for the encryption schemes within the database and learn exactly how to use the sqlite library to interact with a database that I create

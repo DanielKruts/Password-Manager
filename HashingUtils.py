@@ -1,5 +1,6 @@
 import os # Used for the cryptographically secure RNG, os.urandom
 import hashlib # Used for the creation of the cryptographically secure keys, then input into the HKDF for key derivation
+from cryptography import exceptions
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.kdf.hkdf import HKDF
 from typing import Optional, Tuple
@@ -49,6 +50,6 @@ def verifyPW(storedHash: bytes, attemptedPW: str) -> Optional[bytes]:
             return s+derivedEncryption
         return
     
-    except ValueError:
-        print("Error in the sizes of the parameters or the parameters themselves")
+    except exceptions.InvalidKey:
+        print("The Input Password created and invalid key")
         return
