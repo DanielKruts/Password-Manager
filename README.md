@@ -26,4 +26,4 @@ A password manager that I'm building from scratch. I'm utilizing Python and the 
 - Created a solid setup for the tables in my database
 - Played around with some of the other libraries I need to use for this project. I've found that today has been a lot slower than the other few days, but I believe today was a good learning day for me.
 - Improved upon HashingUtils.py, I was returning some stuff that was unnecessary in key derivation. It was good for testing, but returning the encryption key when deriving the keys is unnecessary when it gets derived every time you verify the password that was input is correct.
-- 
+- I think after going through all of the problems I went through before realizing that my entire formatting of the markdown file itself was wrong, the easiest part, I'm just going to go ahead and call it for today.
