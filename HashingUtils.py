@@ -1,17 +1,24 @@
+#|--------------------------------------------------------------------------------------------------|#
+#| This file contains any utility functions for generating keys and encrypting data                 |#
+#| Author: Daniel Krutsick                                                                          |#
+#| Notes: For whenever I decide to jot anything important down in this section                      |#
+#|--------------------------------------------------------------------------------------------------|#
+
+
 import os # Used for the cryptographically secure RNG, os.urandom
 import hashlib # Used for the creation of the cryptographically secure keys, then input into the HKDF for key derivation
 from cryptography import exceptions
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.kdf.hkdf import HKDF
-from typing import Optional, Tuple
+from typing import Optional
 
-#-----------------------------------------------------------------------#
-# Parameters                                                            #
-# N(n): Computational cost(CPU)/Memory cost factor. Must be power of 2  #
-# r: Block size (Typically 8)                                           #
-# p: Parallelization factor(Typically 1)                                #
-# klen: Desired Key Length (e.g. 32 for a 256-bit key)                  #
-#-----------------------------------------------------------------------#
+#|--------------------------------------------------------------------------------------------------|#
+#|Parameters                                                                                        |#
+#|N(n): Computational cost(CPU)/Memory cost factor. Must be power of 2                              |#
+#|r: Block size (Typically 8)                                                                       |#
+#|p: Parallelization factor(Typically 1)                                                            |#
+#|klen: Desired Key Length (e.g. 32 for a 256-bit key)                                              |#
+#|--------------------------------------------------------------------------------------------------|#
 N_COST = 2 ** 14 # 2 ^ 14
 BLOCK_SIZE = 8
 P = 1
@@ -19,17 +26,15 @@ klen = 32
 
 # Takes a desired password and converts it into a byte formatting for hashlib.scrypt to properly handle
 # keyDerviation returns two keys, one for encryption of the passwords in the file, and the other for verification of the user
-def keyDerivation(password: str) -> Tuple[bytes, bytes]:
+def keyDerivation(password: str) -> Optional[bytes]:
     s = os.urandom(16) # 16 bytes of salt
     key = hashlib.scrypt(password.encode('utf-8'), salt=s, n=N_COST, r=BLOCK_SIZE, p=P, dklen=klen)
     
     verify = HKDF(algorithm=hashes.SHA256(), length=klen, salt=s, info=bytes("Verification", 'utf-8'))
-    encrypt = HKDF(algorithm=hashes.SHA256(), length=klen, salt=s, info=bytes("Encryption", 'utf-8'))
 
     verificationKey = verify.derive(key)
-    encryptionKey = encrypt.derive(key)
 
-    return (s+verificationKey, s+encryptionKey)
+    return s+verificationKey
 
 # Derives the key portion from the attempted password and then compares it to the key stored inside of the database
 # Returns the derivedKey if it's correct, else returns None, which indicates that password input was incorrect
@@ -47,9 +52,9 @@ def verifyPW(storedHash: bytes, attemptedPW: str) -> Optional[bytes]:
         if not (verification.verify(derivedKey, key)):
             encrypt = HKDF(algorithm=hashes.SHA256(), length=klen, salt=s, info=bytes("Encryption", 'utf-8'))
             derivedEncryption = encrypt.derive(derivedKey)
-            return s+derivedEncryption
+            return derivedEncryption
         return
     
     except exceptions.InvalidKey:
         print("The Input Password created and invalid key")
-        return
+        return 
