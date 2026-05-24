@@ -5,7 +5,7 @@ A password manager that I'm building from scratch. I'm utilizing Python and the 
     - [x] Start writing the HashingUtils.py file
     - [x] Do research on password managers and how they work
     - [x] Complete the key generation and verification steps in HashingUtils that will be used to allow you to login
-    - [ ] ~~Create a structure for the HashingUtils python script that allows for public and private functions to keep things organized~~ This step was kind of useless, it was a lot better in theory, but what is more important is the proper handling of overwriting and releasing data from memory
+    - [x] ~~Create a structure for the HashingUtils python script that allows for public and private functions to keep things organized~~ This step was kind of useless, it was a lot better in theory, but what is more important is the proper handling of overwriting and releasing data from memory
     - [ ] Figure out and understand exactly when and where the passwords should be hashed or encrypted, and how the client end works in a password manager
     - [ ] Create a database and play around with one to remind myself of my SQL skills and how to properly setup the database to my needs
     - [ ] Research about how to make python scripts to interact with the database directly like querying and entering data
