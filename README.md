@@ -7,8 +7,8 @@ A password manager that I'm building from scratch. I'm utilizing Python and the 
 - [x] Complete the key generation and verification steps in HashingUtils that will be used to allow you to login
 - [x] ~~Create a structure for the HashingUtils python script that allows for public and private functions to keep things organized~~ This step was kind of useless, it was a lot better in theory, but what is more important is the proper handling of overwriting and releasing data from memory
 - [ ] Figure out and understand exactly when and where the passwords should be hashed or encrypted, and how the client end works in a password manager
-- [ ] Create a database and play around with one to remind myself of my SQL skills and how to properly setup the database to my needs
-- [ ] Research about how to make python scripts to interact with the database directly like querying and entering data
+- [x] Create a database and play around with one to remind myself of my SQL skills and how to properly setup the database to my needs
+- [x] Research about how to make python scripts to interact with the database directly like querying and entering data
 - [ ] Start a document that shows the structure of the project to keep myself logically sound and accurate in my implementation
 - [ ] Build the small application with visuals that allows me to login with a username and password to access my section of the database
 
@@ -27,3 +27,10 @@ A password manager that I'm building from scratch. I'm utilizing Python and the 
 - Played around with some of the other libraries I need to use for this project. I've found that today has been a lot slower than the other few days, but I believe today was a good learning day for me.
 - Improved upon HashingUtils.py, I was returning some stuff that was unnecessary in key derivation. It was good for testing, but returning the encryption key when deriving the keys is unnecessary when it gets derived every time you verify the password that was input is correct.
 - I think after going through all of the problems I went through before realizing that my entire formatting of the markdown file itself was wrong, the easiest part, I'm just going to go ahead and call it for today.
+
+## 5/25/2026
+- Learned that the PySide6 Library is much larger and difficult to work with than I thought. A lot of preset functions and documentation to read for each one. I will however get through it
+- Less productive today, still learned a lot about the python library I'm using for designing the app but it was a lot and I didn't get much functional progress done.
+- I have pretty much all of the basics of what I need to do and I hope to complete the password manager within the next 3-4 days
+
+## 5/26/2026

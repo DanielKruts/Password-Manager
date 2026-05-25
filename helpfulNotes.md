@@ -1,20 +1,23 @@
-#Encrypting into a urlsafe encoding for Fernet
+# Encrypting into a urlsafe encoding for Fernet
+```
+encryptionKey = base64.urlsafe_b64encode(verifyPW(verification, "My amazing password"))
+f = Fernet(encryptionKey)
+token = f.encrypt(b"This whole message")
+```
 
-    encryptionKey = base64.urlsafe_b64encode(verifyPW(verification, "My amazing password"))
-    f = Fernet(encryptionKey)
-    token = f.encrypt(b"This whole message")
+# Example of inserting into the database using sqlite
+```
+verification = keyDerivation("My amazing password")
+connection = sqlite3.connect("./Database/Passwords.db")
+c = connection.cursor()
 
-#Example of inserting into the database using sqlite
-
-    verification = keyDerivation("My amazing password")
-    connection = sqlite3.connect("./Database/Passwords.db")
-    c = connection.cursor()
-
-    c.execute("INSERT INTO master (VerificationKey) VALUES (?);", (verification,))
-    connection.commit()
-    c.close()
+c.execute("INSERT INTO master (VerificationKey) VALUES (?);", (verification,))
+connection.commit()
+c.close()
+```
 
 # Example of how to structure a widget class in the PySide6 library
+```
 class MyWidget(QtWidgets.QWidget):
     def __init__(self):
         super().__init__()
@@ -43,3 +46,4 @@ if __name__ == "__main__":
     widget.show()
 
     sys.exit(app.exec())
+```
