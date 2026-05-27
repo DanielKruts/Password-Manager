@@ -33,4 +33,9 @@ A password manager that I'm building from scratch. I'm utilizing Python and the 
 - Less productive today, still learned a lot about the python library I'm using for designing the app but it was a lot and I didn't get much functional progress done.
 - I have pretty much all of the basics of what I need to do and I hope to complete the password manager within the next 3-4 days
 
-## 5/26/2026
+## 5/27/2026
+- Skipped a whole day for a break from the project. Came back and was slightly less productive
+- Took the day to research and understand more about the python package I'm using for designing the app but did not continue learning about the qss style sheets
+- I will continue designing the application and then implementing the true functionality of the application back in as I make a more definite design
+
+## 5/28/2026
