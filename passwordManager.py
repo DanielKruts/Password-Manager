@@ -12,6 +12,9 @@ thisApp = QtWidgets.QApplication()
 
 myApp = app.Stacks()
 
+with open('./Style/app.qss', 'r') as f:
+    myApp.setStyleSheet(f.read())
+
 myApp.resize(800, 600)
 myApp.show()
 

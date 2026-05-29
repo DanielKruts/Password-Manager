@@ -6,10 +6,11 @@ A password manager that I'm building from scratch. I'm utilizing Python and the 
 - [x] Do research on password managers and how they work
 - [x] Complete the key generation and verification steps in HashingUtils that will be used to allow you to login
 - [x] ~~Create a structure for the HashingUtils python script that allows for public and private functions to keep things organized~~ This step was kind of useless, it was a lot better in theory, but what is more important is the proper handling of overwriting and releasing data from memory
-- [ ] Figure out and understand exactly when and where the passwords should be hashed or encrypted, and how the client end works in a password manager
+- [x] Figure out and understand exactly when and where the passwords should be hashed or encrypted, and how the client end works in a password manager
 - [x] Create a database and play around with one to remind myself of my SQL skills and how to properly setup the database to my needs
 - [x] Research about how to make python scripts to interact with the database directly like querying and entering data
-- [ ] Start a document that shows the structure of the project to keep myself logically sound and accurate in my implementation
+- [ ] Implement the pages and functionality of the website
+- [ ] Create a clear function that can wipe the entire database with mutliple steps and checks before doing so.
 - [ ] Build the small application with visuals that allows me to login with a username and password to access my section of the database
 
 ## 5/22/2026
@@ -39,3 +40,4 @@ A password manager that I'm building from scratch. I'm utilizing Python and the 
 - I will continue designing the application and then implementing the true functionality of the application back in as I make a more definite design
 
 ## 5/28/2026
+- 

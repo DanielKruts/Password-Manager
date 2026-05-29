@@ -1,3 +1,45 @@
-QLabel#heading{
-    color:
+QMainWindow, QWidget {
+    background-color: #1a1a2e;
+    color: #e0e0e0;
+    font-family: 'Segoe UI';
+    font-size: 14px;
+}
+
+QLineEdit {
+    background-color: #16213e;
+    border: none;
+    border-bottom: 2px solid #4a90d9;
+    padding: 8px;
+    color: #e0e0e0;
+    border-radius: 4px;
+}
+
+QLineEdit:focus {
+    border-bottom: 2px solid #76b5f7;
+}
+
+QPushButton {
+    background-color: #0f3460;
+    color: #e0e0e0;
+    border-radius: 6px;
+    padding: 10px 20px;
+    border: none;
+}
+
+QPushButton:hover {
+    background-color: #4a90d9;
+}
+
+QPushButton:pressed {
+    background-color: #357abd;
+}
+
+QPushButton#loginButton {
+    background-color: #4a90d9;
+    font-weight: bold;
+    font-size: 15px;
+}
+
+QPushButton#loginButton:hover {
+    background-color: #76b5f7;
 }
