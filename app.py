@@ -3,9 +3,10 @@
 #| passwordManager.py file so that there is more organization being introduced into the development of this app     |#
 #| Author: Daniel Krutsick                                                                                          |#
 #|------------------------------------------------------------------------------------------------------------------|#
-import base64
-import sqlite3
-import os
+import base64 # For encoding into the proper key formatting for the fernet encryption algorithm
+import sqlite3 # Library for interacting with the database created
+import ctypes # This allows for me to use memset and a few other functions to overwrite buffers and release memory
+import os # Used to check for the existence of the Database directory and file
 from typing import Optional
 from PySide6 import QtCore, QtWidgets, QtGui # For creating a GUI
 from HashingUtils import keyDerivation, verifyPW
@@ -25,6 +26,44 @@ def setupCases() -> Optional[bool]:
         return False
     else:
         return
+
+# Creates the tables and commits them in the database for the first time someone sets up the password manager
+def setupDatabase():
+    with sqlite3.connect("./Database/Passwords.db") as conn:
+        c = conn.cursor()
+        c.execute("CREATE TABLE master (VerificationKey BLOB, CHECK(length(VerificationKey) = 48));")
+        c.execute("CREATE UNIQUE INDEX one_row_only_uidx ON master ((true));")
+        c.execute("CREATE TABLE passwords (id INTEGER PRIMARY KEY AUTOINCREMENT, Service VARCHAR(255), Email VARCHAR(255), " \
+        "Username BLOB NOT NULL, Password BLOB NOT NULL, CHECK(length(Password) = 120 AND length(Username) = 120));")
+        conn.commit()
+        c.close()
+
+def insertIntoMaster(pw: str):
+    key = keyDerivation(pw)
+    with sqlite3.connect("./Database/Passwords.db") as conn:
+        c = conn.cursor()
+        c.execute("INSERT INTO master (VerificationKey) as VALUES (?)", (key,))
+        conn.commit()
+        c.close()
+
+def insertIntoPasswords(pw: str, user: str, service:str, email:Optional[str], encKey:bytes):
+    scheme = Fernet(encKey)
+    blobPW = scheme.encrypt(pw)
+    blobUser = scheme.encrypt(user)
+
+    if email:
+        with sqlite3.connect("./Database/Passwords.db") as conn:
+            c = conn.cursor()
+            c.execute("INSERT INTO passwords (Service, Email, Username, Password) as VALUES (?)", (service, email, blobUser, blobPW,))
+            conn.commit()
+            c.close()
+    else:
+        with sqlite3.connect("./Database/Passwords.db") as conn:
+                c = conn.cursor()
+                c.execute("INSERT INTO passwords (Service, Username, Password) as VALUES (?)", (service, blobUser, blobPW,))
+                conn.commit()
+                c.close()
+
 
 #|------------------------------------------------------------------------------------------------------------------|#
 #| Helpful reminder of some of the imports from different Qt library additions                                      |#
@@ -156,6 +195,8 @@ class VaultPage(QtWidgets.QWidget):
 #| The class maintaining the three pages  |#
 #|----------------------------------------|#
 class Stacks(QtWidgets.QMainWindow):
+    __key = None
+
     def __init__(self):
         super().__init__()
 
@@ -185,26 +226,38 @@ class Stacks(QtWidgets.QMainWindow):
         self.vaultPage.logoutSuccess.connect(self.handleLogout)
         self.resetPage.confirmAttempt.connect(self.handleWipe)
 
-    #-- What happens when you click the login button. Determines if the input password is correct or not    --#
-    def handleLogin(self):
+    #-- What happens when you click the login button. Determines if the input password is correct or not        --#
+    def handleLogin(self) -> bytes:
         with sqlite3.connect("./Database/Passwords.db") as conn:
             c = conn.cursor()
 
             verificationKey = c.execute("SELECT VerificationKey FROM master;")
-            verify = verifyPW(verificationKey.fetchone()[0], self.loginPage.pw.text())
+            encKey = verifyPW(verificationKey.fetchone()[0], self.loginPage.pw.text())
 
-            if verify:
+            if encKey:
                 print("It verified the password as correct")
                 self.loginPage.pw.clear()
                 self.stack.setCurrentIndex(1)
+                encKey = base64.urlsafe_b64encode(encKey)
+                return encKey
             else:
                 print("It verified the password as incorrect")
             conn.commit()
             c.close()
-        
-    #-- Really easy, it logs you out when you click the button, no further logic                            --#
+    
+    #-- Handles how to input a new password into the database along with its relational information             --#
+    def handleNewPW():
+        return
+
+    #-- Will handle how the application reads the passwords from the database, decrypting and what not          --#
+    def handleReadPW():
+        return
+    
+    #-- Really easy, it logs you out when you click the button, no further logic                                --#
     def handleLogout(self):
         self.stack.setCurrentIndex(0)
+        # There needs to be more here to make sure that the verification key is wiped from memory and all data that was accessed is wiped
+        # from the respective pages       
         print("Successfully logged out")
     
     def handleWipe(self):
@@ -217,26 +270,29 @@ class Stacks(QtWidgets.QMainWindow):
             conn.commit()
             c.close()
     
+    #-- Handles how to setup the database. Refer back to helper functions at the top for which each case means  --#
     def handleSetup(self):
         set = setupCases() # the returned value of what case to do
         match set:
             case True:
-                with sqlite3.connect("./Database/Passwords.db") as conn:
-                    c = conn.cursor()
-                    c.execute("CREATE TABLE master (VerificationKey BLOB, CHECK(length(VerificationKey) = 48));")
-                    c.execute("CREATE UNIQUE INDEX one_row_only_uidx ON master ((true));")
-                    c.execute("CREATE TABLE passwords (id INTEGER PRIMARY KEY AUTOINCREMENT, Service VARCHAR(255), Email VARCHAR(255), " \
-                    "Username BLOB NOT NULL, Password BLOB NOT NULL, CHECK(length(Password) = 120 AND length(Username) = 120));")
-                    
-                    master = keyDerivation(self.setupPage.inputPW)
-                    c.execute("INSERT INTO master (VerificationKey) VALUES (?)", (master,))
-                    
+                insertIntoMaster(self.setupPage.inputPW.text())
 
-
-                    self.setupPage.inputPW.clear()
-                    self.setupPage.inputPW2.clear()
-
+                self.setupPage.inputPW.clear()
+                self.setupPage.inputPW2.clear()
             case False:
-                return
+                os.open("./Database/Passwords.db", "x")
+                os.close()
+                setupDatabase()
+                insertIntoMaster(self.setupPage.inputPW.text())
+
+                self.setupPage.inputPW.clear()
+                self.setupPage.inputPW2.clear()
             case None:
-                return
+                os.mkdir("./Database")
+                os.open("./Database/Passwords.db", "x")
+                os.close()
+                setupDatabase()
+                insertIntoMaster(self.setupPage.inputPW.text())
+
+                self.setupPage.inputPW.clear()
+                self.setupPage.inputPW2.clear()

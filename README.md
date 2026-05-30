@@ -40,4 +40,9 @@ A password manager that I'm building from scratch. I'm utilizing Python and the 
 - I will continue designing the application and then implementing the true functionality of the application back in as I make a more definite design
 
 ## 5/28/2026
-- 
+- Lots of qss style sheet learning and research, not a lot of progress past a general scheme of how the app is designed
+- Learned that the qss style sheets are not as hard as I thought, just don't like doing design
+
+## 5/29/2026
+- I've created mutliple helper functions for adding and removing information from the database.
+- Started creating more features for the project to be completed. Some of these include, wiping the database, adding to the database tables, and how to handle the setup process, whether they are starting their password manager application for the first time, or after wiping the database
