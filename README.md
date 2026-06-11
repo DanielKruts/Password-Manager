@@ -46,3 +46,14 @@ A password manager that I'm building from scratch. I'm utilizing Python and the 
 ## 5/29/2026
 - I've created mutliple helper functions for adding and removing information from the database.
 - Started creating more features for the project to be completed. Some of these include, wiping the database, adding to the database tables, and how to handle the setup process, whether they are starting their password manager application for the first time, or after wiping the database
+
+## 5/31/2026
+- I did a few edits of app.py to make it more correct but overall I did not get a lot of work done this day
+
+## 6/4/2026
+- Took a break from the project
+
+## 6/11/2026
+- Tried getting back into the project but I kept getting sick and didn't feel like continuing the project while I had to do other stuff still all while sick
+- Got back on track today and started editing the qss style sheet to fit the model of the application I want to make again. It is still difficult to do so since I still don't know exactly what aesthetically looks pleasing to other people
+- Decided to double check and make sure that there were lots of pages accounted for and that you could go between all of the pages. Still want to add back buttons on some pages like the reset page, that way after clicking once you aren't required to reset the database

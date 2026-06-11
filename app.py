@@ -35,16 +35,12 @@ def setupDatabase():
         c.execute("CREATE UNIQUE INDEX one_row_only_uidx ON master ((true));")
         c.execute("CREATE TABLE passwords (id INTEGER PRIMARY KEY AUTOINCREMENT, Service VARCHAR(255), Email VARCHAR(255), " \
         "Username BLOB NOT NULL, Password BLOB NOT NULL, CHECK(length(Password) = 120 AND length(Username) = 120));")
-        conn.commit()
-        c.close()
 
 def insertIntoMaster(pw: str):
     key = keyDerivation(pw)
     with sqlite3.connect("./Database/Passwords.db") as conn:
         c = conn.cursor()
-        c.execute("INSERT INTO master (VerificationKey) as VALUES (?)", (key,))
-        conn.commit()
-        c.close()
+        c.execute("INSERT INTO master (VerificationKey) VALUES (?)", (key,))
 
 def insertIntoPasswords(pw: str, user: str, service:str, email:Optional[str], encKey:bytes):
     scheme = Fernet(encKey)
@@ -54,16 +50,11 @@ def insertIntoPasswords(pw: str, user: str, service:str, email:Optional[str], en
     if email:
         with sqlite3.connect("./Database/Passwords.db") as conn:
             c = conn.cursor()
-            c.execute("INSERT INTO passwords (Service, Email, Username, Password) as VALUES (?)", (service, email, blobUser, blobPW,))
-            conn.commit()
-            c.close()
+            c.execute("INSERT INTO passwords (Service, Email, Username, Password) VALUES (?)", (service, email, blobUser, blobPW,))
     else:
         with sqlite3.connect("./Database/Passwords.db") as conn:
                 c = conn.cursor()
-                c.execute("INSERT INTO passwords (Service, Username, Password) as VALUES (?)", (service, blobUser, blobPW,))
-                conn.commit()
-                c.close()
-
+                c.execute("INSERT INTO passwords (Service, Username, Password) VALUES (?)", (service, blobUser, blobPW,))
 
 #|------------------------------------------------------------------------------------------------------------------|#
 #| Helpful reminder of some of the imports from different Qt library additions                                      |#
@@ -96,10 +87,10 @@ class SetupPage(QtWidgets.QWidget):
         self.confirmButton.clicked.connect(self.inputPassword)
 
     def inputPassword(self):
-        if self.inputPW == self.inputPW2:
+        if self.inputPW.text() == self.inputPW2.text():
             self.passwordAttempt.emit()
         else:
-            print("Both passwords are incorrect")# Replace with a Qt object later
+            print("Both passwords are not the same")# Replace with a Qt object later
 
 class ResetPage(QtWidgets.QWidget):
     confirmAttempt = QtCore.Signal()
@@ -123,7 +114,7 @@ class ResetPage(QtWidgets.QWidget):
         self.confirmButton.clicked.connect(self.confirmedWipe)
 
     def confirmedWipe(self):
-        if self.inputConfirm == "I CONFIRM":
+        if self.inputConfirm.text() == "I CONFIRM":
             self.confirmAttempt.emit()
         else:
             print("Confirmation message incorrect") # Replace with a Qt object later
@@ -147,6 +138,8 @@ class NewPasswordPage(QtWidgets.QWidget):
 #|---------------------------------------|#
 class LoginPage(QtWidgets.QWidget):
     loginAttempt = QtCore.Signal()
+    resetClicked = QtCore.Signal()
+    setupClicked = QtCore.Signal()
 
     def __init__(self):
         super().__init__()
@@ -154,20 +147,32 @@ class LoginPage(QtWidgets.QWidget):
         #-- All of my individual widgets and their defs     --#
         self.pw = QtWidgets.QLineEdit()
         self.loginButton = QtWidgets.QPushButton("Login")
-        self.reset = QtWidgets.QPushButton("RESET PASSWORD")
         self.loginButton.setObjectName("loginButton")
+        self.resetButton = QtWidgets.QPushButton("Click to Reset Database")
+        self.setupButton = QtWidgets.QPushButton("Setup Password")
+        self.errorMessage = QtWidgets.QLabel()
 
         #-- All of the widgets added to this page           --#
         self.layout = QtWidgets.QVBoxLayout(self)
         self.layout.addWidget(self.pw)
         self.layout.addWidget(self.loginButton)
+        self.layout.addWidget(self.resetButton)
+        self.layout.addWidget(self.setupButton)
+        self.layout.addWidget(self.errorMessage)
 
         #-- Events that happen on this page                 --#
         self.loginButton.clicked.connect(self.login)
+        self.resetButton.clicked.connect(self.reset)
+        self.setupButton.clicked.connect(self.setup)
 
+    def reset(self):
+        self.resetClicked.emit()
 
     def login(self):
         self.loginAttempt.emit()
+    
+    def setup(self):
+        self.setupClicked.emit()
 
 #|----------------------------------------|#
 #| Page for the vault, or after you login |#
@@ -212,52 +217,64 @@ class Stacks(QtWidgets.QMainWindow):
         self.setupPage = SetupPage()
 
         #-- Adding all of the widgets onto the stack                --#
-        self.stack.addWidget(self.loginPage)
-        self.stack.addWidget(self.vaultPage)
-        self.stack.addWidget(self.pwPage)
-        self.stack.addWidget(self.resetPage)
-        self.stack.addWidget(self.setupPage)
+        self.stack.addWidget(self.loginPage) # Index 0
+        self.stack.addWidget(self.vaultPage) # Index 1
+        self.stack.addWidget(self.pwPage)    # Index 2
+        self.stack.addWidget(self.resetPage) # Index 3
+        self.stack.addWidget(self.setupPage) # Index 4
 
         #-- Where the currentIndex is set at by default(Login Page) --#
-        self.stack.setCurrentIndex(3)
+        self.stack.setCurrentIndex(0)
 
         #-- All of the receivers for the signals sent by the pages  --#
         self.loginPage.loginAttempt.connect(self.handleLogin)
+        self.loginPage.resetClicked.connect(self.resetClick)
+        self.loginPage.setupClicked.connect(self.setupClick)
         self.vaultPage.logoutSuccess.connect(self.handleLogout)
         self.resetPage.confirmAttempt.connect(self.handleWipe)
+        self.setupPage.passwordAttempt.connect(self.handleSetup)
+
+    def setupClick(self):
+        self.loginPage.pw.clear()
+        self.loginPage.errorMessage.clear()
+        self.stack.setCurrentIndex(4)
+
+    def resetClick(self):
+        self.loginPage.pw.clear()
+        self.stack.setCurrentIndex(3)
 
     #-- What happens when you click the login button. Determines if the input password is correct or not        --#
-    def handleLogin(self) -> bytes:
-        with sqlite3.connect("./Database/Passwords.db") as conn:
-            c = conn.cursor()
+    def handleLogin(self):
+        try:
+            with sqlite3.connect("./Database/Passwords.db") as conn:
+                c = conn.cursor()
 
-            verificationKey = c.execute("SELECT VerificationKey FROM master;")
-            encKey = verifyPW(verificationKey.fetchone()[0], self.loginPage.pw.text())
+                verificationKey = c.execute("SELECT VerificationKey FROM master;")
+                encKey = verifyPW(verificationKey.fetchone()[0], self.loginPage.pw.text())
 
-            if encKey:
-                print("It verified the password as correct")
-                self.loginPage.pw.clear()
-                self.stack.setCurrentIndex(1)
-                encKey = base64.urlsafe_b64encode(encKey)
-                return encKey
-            else:
-                print("It verified the password as incorrect")
-            conn.commit()
-            c.close()
-    
+                if encKey:
+                    print("It verified the password as correct") # Remove this after testing is done
+                    self.loginPage.pw.clear()
+                    self.stack.setCurrentIndex(1)
+                    encKey = base64.urlsafe_b64encode(encKey)
+                    self.__key = encKey
+                    return
+                else:
+                    print("It verified the password as incorrect") # Replace with a qt object
+        except TypeError:
+            errMsg = "There is no password setup for the password manager. Please click the setup button to create a password."
+        self.loginPage.errorMessage.setText(errMsg)
+            
     #-- Handles how to input a new password into the database along with its relational information             --#
     def handleNewPW():
-        return
 
-    #-- Will handle how the application reads the passwords from the database, decrypting and what not          --#
-    def handleReadPW():
         return
     
     #-- Really easy, it logs you out when you click the button, no further logic                                --#
     def handleLogout(self):
         self.stack.setCurrentIndex(0)
-        # There needs to be more here to make sure that the verification key is wiped from memory and all data that was accessed is wiped
-        # from the respective pages       
+        # Fill this with more functions clearing the appropriate data for security purposes
+        ctypes.memset(self.__key, 0, len(self.__key))
         print("Successfully logged out")
     
     def handleWipe(self):
@@ -266,9 +283,7 @@ class Stacks(QtWidgets.QMainWindow):
 
             c.execute("DELETE FROM master;")
             c.execute("DELETE FROM passwords;")
-
-            conn.commit()
-            c.close()
+        self.stack.setCurrentIndex(0) # Back to Login
     
     #-- Handles how to setup the database. Refer back to helper functions at the top for which each case means  --#
     def handleSetup(self):
@@ -296,3 +311,4 @@ class Stacks(QtWidgets.QMainWindow):
 
                 self.setupPage.inputPW.clear()
                 self.setupPage.inputPW2.clear()
+        self.stack.setCurrentIndex(0) # Back to Login
